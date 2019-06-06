@@ -7,7 +7,7 @@ var app = express();
 
 app.get('/', function(req, res){
 
-	res.send(generateStudents());
+	res.send(generateMatrix());
 
 });
 
@@ -15,31 +15,26 @@ app.listen(3000, function(){
 	console.log('Accepting HTTP requests on port 3000');
 });
 
-// Dynamic content 
-function generateStudents(){
-	var numberOfStudents = chance.integer({
-		min : 0,
+// Dynamic content (generate random boolean matrix of size 1 to 10)
+function generateMatrix(){
+	
+	var size = chance.integer({
+		min : 1,
 		max : 10
 	});
-	console.log(numberOfStudents);
-	var students = [];
-	for(var i = 0; i < numberOfStudents; ++i){
-		var gender = chance.gender();
-		var birthYear = chance.year({
-			min : 1986,
-			max : 1996
-		});
-		students.push({
-			firstName: chance.first({
-				gender: gender
-			}), 
-			lastName: chance.last(),
-			gender: gender,
-			birthday: chance.birthday({
-				year: birthYear
-			})
-		});
+	
+	var matrix = [];
+	for(var line = 0; line < size; ++line){
+		
+		matrix[line] = new Array(size);
+		
+		for(var column = 0; column < size; ++column){
+			matrix[line][column] = chance.integer({
+				min : 0,
+				max : 1
+			});
+		}
 	}
-	console.log(students);
-	return students;
+	console.log(matrix);
+	return matrix;
 }
