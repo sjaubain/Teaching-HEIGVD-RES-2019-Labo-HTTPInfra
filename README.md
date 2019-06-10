@@ -77,7 +77,7 @@ On exécute dans un premier temps nos deux containers statique et dynamique sans
 docker run -d -p --name apache_rp 8080:80 res/apache_rp
 ```
 
-Notons qu'il est indispensable de spécifier ici un port mapping pour pouvoir accéder au reverse proxy depuis l'extérieur de la machine docker. Il s'agira de l'unique point d'entrée vers nos deux containers, qui ne seront eux pas joignables depuis le navigateur. En effet, c'est le reverse proxy qui se chargera d'"aiguiller" les requêtes. Une résolution DNS est nécessaire pour accéder le serveur via l'adresse *demo.res.ch*.
+Notons qu'il est indispensable de spécifier ici un port mapping pour pouvoir accéder au reverse proxy depuis l'extérieur de la machine docker. Il s'agira de l'unique point d'entrée vers nos deux containers, qui ne seront eux pas joignables depuis le navigateur. En effet, c'est le reverse proxy qui se chargera d'"aiguiller" les requêtes. Une résolution DNS est nécessaire pour accéder le serveur via l'adresse *demo.res.ch:8080*.
 
 ## Etape 4: Requêtes AJAX avec JQuery
 
