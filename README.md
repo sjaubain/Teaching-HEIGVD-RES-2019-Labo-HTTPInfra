@@ -12,7 +12,7 @@ Branche git : **fb-apache-static**
 
 Répertoire : **/docker-images/apache-php-image/**
 
-L'image docker est construite à partir d'une image officielle php-apache. La commande ```COPY content/ /var/www/html``` permet de copier le contenu static de notre page statique dans le système de fichier de l'image.
+L'image docker est construite à partir d'une image officielle php-apache. La commande ```COPY content/ /var/www/html``` permet de copier le contenu de notre page statique dans le système de fichier de l'image.
 
 Pour accéder au serveur depuis un navigateur, il est nécessaire de faire du port-mapping. Pour construire l'image, se placer dans le répertoire puis taper
 
@@ -28,7 +28,7 @@ docker run -d -p 9090:80 --name apache_static res/apache_static
 
 Il est ensuite possible d'accéder au serveur via l'adresse `<adresse_machine_docker>:9090`
 
-Pour naviguer dans le système de fichiers du container et observer que le contenu a bien été copié ou pour éditer le contenu, entrer la commande
+Pour naviguer dans le système de fichiers du container et observer que le contenu a bien été copié ou pour l'éditer, entrer la commande
 
 ```bash
 docker exec -it apache_static /bin/bash
@@ -55,7 +55,7 @@ Puis on lance un container
 docker run -d -p 9191:3000 --name express_dynamic res/express_dynamic
 ```
 
-Le raisonnement à effectuer pour récupérer les payload JSon est similaire à celui expliqué dans l'étape précédente. L'adresse sera `<adresse_machine_docker>:9191/api/matrix/`. On observe bien que le contenu est généré aléatoirement et change à chaque requête.
+Le raisonnement à suivre pour récupérer les payload JSon est similaire à celui expliqué dans l'étape précédente. L'adresse sera `<adresse_machine_docker>:9191/api/matrix/`. On observe bien que le contenu est généré aléatoirement et change à chaque requête.
 
 ## Etape 3: Reverse proxy apache (configuration statique)
 
@@ -81,11 +81,11 @@ Notons qu'il est indispensable de spécifier ici un port mapping pour pouvoir ac
 
 ## Etape 4: Requêtes AJAX avec JQuery
 
-Le but de cette étape est d'inclure la liste de matrices provenant du noeud dynamique au sein de la page html provenant du noeud statique, et ce grâce à des requêtes AJAX émises par le navigateur (client) Pour ce faire, il est impératif d'utiliser un reverse proxy pour ne pas violer la *same origin policy*.
+Le but de cette étape est d'inclure la liste de matrices provenant du noeud dynamique au sein de la page html provenant du noeud statique, et ce grâce à des requêtes AJAX émises par le navigateur (client). Pour ce faire, il est impératif d'utiliser un reverse proxy pour ne pas violer la *same origin policy*.
 
 Branche git : **fb-ajax-jquery**
 
-Répertoire : **/docker-images/apache-static/**
+Répertoire : **/docker-images/apache-php-image/**
 
 Un script présent dans le dossier *js* du contenu de la page permet de recevoir le payload JSon puis de l'insérer dans une balise html choisie gràce à la ligne
 
@@ -93,11 +93,11 @@ Un script présent dans le dossier *js* du contenu de la page permet de recevoir
 $(".insert-text").text(m);
 ```
 
-Toutes les balises ayant pour identifiant *insert-text* se rempliront alors du contenu dynamique obtenu. Si on utilise par exemple les outils de développement du Chrome, on observe que les requêtes AJAX proviennent bel et bien du navigateur.
+Toutes les balises ayant pour identifiant *insert-text* se rempliront alors du contenu dynamique obtenu. Si on utilise par exemple les outils de développement de Chrome, on observe que les requêtes AJAX proviennent bel et bien du navigateur et ne sont pas émises d'un noeud à l'autre.
 
 ## Etape 5: Configuration dynamique du reverse proxy
 
-Comme nous l'avons vu dans l'étape 4, la configuration est fragile car les adresses IP des noeuds sont codées "en dur" dans le fichier de configuration. Pour remédier à ce problème, on utilise des variables d'environnement que le flag `-e` de docker permet d'instancier au sein du container.
+Comme nous l'avons vu dans l'étape 4, la configuration est fragile car les adresses IP des noeuds sont codées "en dur" dans le fichier de configuration. Pour remédier à ce problème, on utilise des variables d'environnement que le flag `-e` de docker permet de définir au sein du container.
 
 Branche git : **fb-dynamic-configuration**
 
@@ -105,7 +105,7 @@ Répertoire : **/docker-images/apache-reverse-proxy/**
 
 Nous utilisons notre propre fichier *apache2-foreground*, dans lequel les commandes permettant de définir de nouvelles variables d'environnement `$STATIC_APP` et `$DYNAMIC_APP` ainsi que la commande permettant à un template php récupérant la valeur de ces variables d'être copié dans le fichier principal de configuration des adresses des noeuds du proxy.
 
-De cette manière, lors de l'exécution de *apache2-foreground* dans le container php, les adresses seront récupérées dynamiquement, et ce quelle que soient les adresses des containers voulus. Pour s'en convaincre, on peut lancer un nombre arbitraire de fois les containers statiques et dynamiques, spécifier un nom pour les derniers, et enfin lancer le container du reverse proxy en lui passant les variables d'environnement avec les valeurs des adresses des containers récupérées.
+De cette manière, lors de l'exécution de *apache2-foreground* dans le container php, les adresses seront récupérées puis attribuées dynamiquement. Pour s'en convaincre, on peut lancer un nombre arbitraire de fois les containers statiques et dynamiques, spécifier un nom pour les derniers, et enfin lancer le container du reverse proxy en instanciant les variables d'environnement avec les valeurs des adresses récupérées.
 
 ```bash
 # Lancement des containers
@@ -123,7 +123,7 @@ docker inspect express_dynamic | grep -i -ipaddr
 
 # Lancement du container reverse proxy avec le flag -e
 # Necessite de reconstruire l'image res/apache_rp
-docker run -d -e STATIC_APP=IP_appache_php:80 -e DYNAMIC_APP=IP_express_dynamic:3000 -–name apache_rp -p 8080:80 res/apache_rp
+docker run -d -e STATIC_APP=<static_ip>:80 -e DYNAMIC_APP=<dynamic_ip>:3000 -–name apache_rp -p 8080:80 res/apache_rp
 ```
 
 On constate que tout fonctionne quel que soit le nombre de containers lancés. Cette démarche est cependante fastidieuse et un script bash présent à la racine permet d'automatiser toute cette procédure.
